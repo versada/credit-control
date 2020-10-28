@@ -229,7 +229,7 @@ class ResPartner(models.Model):
             "draft": {
                 "domain": company_domain
                 + [
-                    ("move_id.type", "in", ["out_invoice", "out_refund"]),
+                    ("move_id.move_type", "in", ["out_invoice", "out_refund"]),
                     ("account_internal_type", "=", "receivable"),
                     ("parent_state", "in", ["draft", "proforma", "proforma2"]),
                 ],
