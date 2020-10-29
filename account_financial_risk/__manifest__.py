@@ -12,6 +12,7 @@
     "depends": ["account"],
     "data": [
         "security/security.xml",
+        "security/ir.model.access.csv",
         "views/account_financial_risk_view.xml",
         "views/res_config_view.xml",
         "views/res_partner_view.xml",

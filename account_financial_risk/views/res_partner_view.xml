@@ -34,7 +34,7 @@
                                 <button
                                     name="open_risk_pivot_info"
                                     type="object"
-                                    class="oe_link"
+                                    class="btn-link"
                                     context="{'open_risk_field': 'risk_invoice_draft'}"
                                 >
                                     <field
@@ -51,7 +51,7 @@
                                 <button
                                     name="open_risk_pivot_info"
                                     type="object"
-                                    class="oe_link"
+                                    class="btn-link"
                                     context="{'open_risk_field': 'risk_invoice_open'}"
                                 >
                                     <field
@@ -68,7 +68,7 @@
                                 <button
                                     name="open_risk_pivot_info"
                                     type="object"
-                                    class="oe_link"
+                                    class="btn-link"
                                     context="{'open_risk_field': 'risk_invoice_unpaid'}"
                                 >
                                     <field
@@ -85,7 +85,7 @@
                                 <button
                                     name="open_risk_pivot_info"
                                     type="object"
-                                    class="oe_link"
+                                    class="btn-link"
                                     context="{'open_risk_field': 'risk_account_amount'}"
                                 >
                                     <field
@@ -102,7 +102,7 @@
                                 <button
                                     name="open_risk_pivot_info"
                                     type="object"
-                                    class="oe_link"
+                                    class="btn-link"
                                     context="{'open_risk_field': 'risk_account_amount_unpaid'}"
                                 >
                                     <field
