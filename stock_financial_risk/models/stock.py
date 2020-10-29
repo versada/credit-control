@@ -17,10 +17,11 @@ class StockMove(models.Model):
             )
             if moves:
                 raise exceptions.UserError(
-                    _("Financial risk exceeded in partner:\n%s")
-                    % moves.mapped("partner_id.name")
-                )
-        return super(StockMove, self)._action_done()
+                    _(
+                        "Financial risk exceeded in partner:\n%s",
+                        moves.mapped("partner_id.name"),
+                    ))
+        return super()._action_done()
 
 
 class StockPicking(models.Model):
