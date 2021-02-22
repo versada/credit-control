@@ -172,11 +172,15 @@
                                 attrs="{'readonly': [('risk_allow_edit', '=', False)]}"
                                 nolabel="1"
                             />
-                            <span>(<field
+                            <span>
+                                (
+                                <field
                                     name="risk_currency_id"
                                     readonly="1"
                                     nolabel="1"
-                                />)</span>
+                                />
+                                )
+                            </span>
                         </div>
                         <field
                             name="manual_credit_currency_id"

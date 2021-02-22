@@ -15,7 +15,12 @@ TODO: add repo description.
 
 [//]: # (addons)
 
-This part will be replaced when running the oca-gen-addons-table script from OCA/maintainer-tools.
+Available addons
+----------------
+addon | version | summary
+--- | --- | ---
+[account_financial_risk](account_financial_risk/) | 14.0.1.0.0 | Manage customer risk
+[sale_financial_risk](sale_financial_risk/) | 14.0.1.0.0 | Manage partner risk in sales orders
 
 [//]: # (end addons)
 
