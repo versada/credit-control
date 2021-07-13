@@ -116,8 +116,7 @@ class CreditControlCommunication(models.TransientModel):
 
     @api.model
     def _aggregate_credit_lines(self, lines):
-        """ Aggregate credit control line by partner, level, and currency
-        """
+        """Aggregate credit control line by partner, level, and currency"""
         comms = self.browse()
         if not lines:
             return comms
@@ -154,8 +153,7 @@ class CreditControlCommunication(models.TransientModel):
 
     @api.model
     def _generate_comm_from_credit_lines(self, lines):
-        """ Generate a communication object per aggregation of credit lines.
-        """
+        """Generate a communication object per aggregation of credit lines."""
         datas = self._aggregate_credit_lines(lines)
         comms = self.create(datas)
         return comms
