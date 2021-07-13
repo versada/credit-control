@@ -26,7 +26,10 @@
         </field>
     </record>
     <!-- for menu -->
-    <record id="open_credit_line_emailer_wizard_menu_action" model="ir.actions.act_window">
+    <record
+        id="open_credit_line_emailer_wizard_menu_action"
+        model="ir.actions.act_window"
+    >
         <field name="name">Send By Email</field>
         <field name="res_model">credit.control.emailer</field>
         <field name="view_mode">form</field>

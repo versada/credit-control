@@ -29,11 +29,14 @@
         </field>
     </record>
     <!-- for menu -->
-    <record id="open_credit_line_printer_wizard_menu_action" model="ir.actions.act_window">
+    <record
+        id="open_credit_line_printer_wizard_menu_action"
+        model="ir.actions.act_window"
+    >
         <field name="name">Print Lines</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">credit.control.printer</field>
-        <field name="binding_model_id" ref="model_credit_control_line"/>
+        <field name="binding_model_id" ref="model_credit_control_line" />
         <field name="view_mode">form</field>
         <field name="target">new</field>
     </record>

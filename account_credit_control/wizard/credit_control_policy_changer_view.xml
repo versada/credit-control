@@ -54,11 +54,14 @@
         <field name="help">Allows to manually change credit level</field>
     </record>
     <!-- for menu -->
-    <record id="action_wizard_credit_policy_changer_menu_action" model="ir.actions.act_window">
+    <record
+        id="action_wizard_credit_policy_changer_menu_action"
+        model="ir.actions.act_window"
+    >
         <field name="name">Change current credit policy</field>
         <field name="res_model">credit.control.policy.changer</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
-        <field name="binding_model_id" ref="account.model_account_move"/>
+        <field name="binding_model_id" ref="account.model_account_move" />
     </record>
 </odoo>

@@ -35,7 +35,10 @@
         </field>
     </record>
     <!-- for menu -->
-    <record id="open_credit_line_marker_wizard_menu_action" model="ir.actions.act_window">
+    <record
+        id="open_credit_line_marker_wizard_menu_action"
+        model="ir.actions.act_window"
+    >
         <field name="name">Change Lines' State</field>
         <field name="res_model">credit.control.marker</field>
         <field name="view_mode">form</field>
