@@ -64,7 +64,7 @@ class TestAccountInvoice(TransactionCase):
         # Create an invoice
         invoice_form = Form(
             self.env["account.move"].with_context(
-                default_type="out_invoice", check_move_validity=False
+                default_move_type="out_invoice", check_move_validity=False
             )
         )
         invoice_form.invoice_date = date_invoice
@@ -81,7 +81,7 @@ class TestAccountInvoice(TransactionCase):
             invoice_line_form.tax_ids.clear()
         invoice = invoice_form.save()
 
-        invoice.post()
+        invoice.action_post()
 
         control_run = self.env["credit.control.run"].create(
             {"date": fields.Date.today(), "policy_ids": [(6, 0, [policy.id])]}
@@ -158,7 +158,7 @@ class TestAccountInvoice(TransactionCase):
         # Create an invoice
         invoice_form = Form(
             self.env["account.move"].with_context(
-                default_type="out_invoice", check_move_validity=False
+                default_move_type="out_invoice", check_move_validity=False
             )
         )
         invoice_form.invoice_date = date_invoice
@@ -175,7 +175,7 @@ class TestAccountInvoice(TransactionCase):
             invoice_line_form.tax_ids.clear()
         invoice = invoice_form.save()
 
-        invoice.post()
+        invoice.action_post()
 
         control_run = self.env["credit.control.run"].create(
             {"date": fields.Date.today(), "policy_ids": [(6, 0, [policy.id])]}
@@ -239,7 +239,7 @@ class TestAccountInvoice(TransactionCase):
         # Create an invoice
         invoice_form = Form(
             self.env["account.move"].with_context(
-                default_type="out_invoice", check_move_validity=False
+                default_move_type="out_invoice", check_move_validity=False
             )
         )
         invoice_form.invoice_date = date_invoice
@@ -256,7 +256,7 @@ class TestAccountInvoice(TransactionCase):
             invoice_line_form.tax_ids.clear()
         invoice = invoice_form.save()
 
-        invoice.post()
+        invoice.action_post()
 
         control_run = self.env["credit.control.run"].create(
             {"date": fields.Date.today(), "policy_ids": [(6, 0, [policy.id])]}

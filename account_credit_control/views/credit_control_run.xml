@@ -4,7 +4,7 @@
         <field name="name">credit.control.run.tree</field>
         <field name="model">credit.control.run</field>
         <field name="arch" type="xml">
-            <tree string="Credit control run">
+            <tree>
                 <field name="date" />
                 <field name="state" />
             </tree>
@@ -19,7 +19,7 @@
                     <button
                         name="generate_credit_lines"
                         string="Compute Credit Control Lines"
-                        class="oe_highlight"
+                        class="btn-primary"
                         type="object"
                         icon="fa-cogs"
                         attrs="{'invisible': [('state', '!=', 'draft')]}"
@@ -96,7 +96,6 @@
         <field name="view_id" ref="credit_control_run_tree" />
     </record>
     <menuitem
-        name="Credit Control Run"
         parent="base_credit_control_menu"
         action="credit_control_run"
         sequence="10"

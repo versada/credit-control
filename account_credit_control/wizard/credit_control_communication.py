@@ -17,29 +17,24 @@ class CreditControlCommunication(models.TransientModel):
     _description = "credit control communication"
     _rec_name = "partner_id"
 
-    partner_id = fields.Many2one(
-        comodel_name="res.partner", string="Partner", required=True
-    )
+    partner_id = fields.Many2one(comodel_name="res.partner", required=True)
     current_policy_level = fields.Many2one(
         comodel_name="credit.control.policy.level", string="Level", required=True
     )
-    currency_id = fields.Many2one(
-        comodel_name="res.currency", string="Currency", required=True
-    )
+    currency_id = fields.Many2one(comodel_name="res.currency", required=True)
     credit_control_line_ids = fields.Many2many(
-        comodel_name="credit.control.line", rel="comm_credit_rel", string="Credit Lines"
+        comodel_name="credit.control.line", string="Credit Lines"
     )
     contact_address = fields.Many2one(comodel_name="res.partner", readonly=True)
     report_date = fields.Date(default=lambda self: fields.Date.context_today(self))
 
     company_id = fields.Many2one(
         comodel_name="res.company",
-        string="Company",
         default=lambda self: self.env.company,
         required=True,
     )
     user_id = fields.Many2one(
-        comodel_name="res.users", default=lambda self: self.env.user, string="User"
+        comodel_name="res.users", default=lambda self: self.env.user
     )
     total_invoiced = fields.Float(compute="_compute_total")
     total_due = fields.Float(compute="_compute_total")
@@ -73,7 +68,7 @@ class CreditControlCommunication(models.TransientModel):
                 # just set a value on creation
                 partner_id = vals["partner_id"]
                 vals["contact_address"] = self._get_contact_address(partner_id).id
-        return super(CreditControlCommunication, self).create(vals_list)
+        return super().create(vals_list)
 
     def get_email(self):
         """ Return a valid email for customer """
@@ -84,14 +79,12 @@ class CreditControlCommunication(models.TransientModel):
             email = contact.commercial_partner_id.email
         return email
 
-    @api.returns("res.partner")
     def get_contact_address(self):
         """ Compatibility method, please use the contact_address field """
         self.ensure_one()
         return self.contact_address
 
     @api.model
-    @api.returns("res.partner")
     def _get_contact_address(self, partner_id):
         partner_obj = self.env["res.partner"]
         partner = partner_obj.browse(partner_id)
@@ -100,7 +93,6 @@ class CreditControlCommunication(models.TransientModel):
         return partner_obj.browse(add_id)
 
     @api.model
-    @api.returns("credit.control.line")
     def _get_credit_lines(self, line_ids, partner_id, level_id, currency_id):
         """ Return credit lines related to a partner and a policy level """
         cr_line_obj = self.env["credit.control.line"]
@@ -134,7 +126,7 @@ class CreditControlCommunication(models.TransientModel):
         cr = self.env.cr
         cr.execute(sql, (tuple(lines.ids),))
         res = cr.dictfetchall()
-        company_currency = self.env.user.company_id.currency_id
+        company_currency = self.env.company.currency_id
         datas = []
         for group in res:
             data = {}
@@ -158,14 +150,13 @@ class CreditControlCommunication(models.TransientModel):
         comms = self.create(datas)
         return comms
 
-    @api.returns("mail.mail")
     def _generate_emails(self):
         """ Generate email message using template related to level """
         emails = self.env["mail.mail"]
         required_fields = ["subject", "body_html", "email_from", "email_to"]
         for comm in self:
             template = comm.current_policy_level.email_template_id
-            email_values = template.generate_email(comm.id)
+            email_values = template.generate_email(comm.id, required_fields)
             email_values["message_type"] = "email"
             # model is Transient record (self) removed periodically so no point
             # of storing res_id
@@ -204,7 +195,6 @@ class CreditControlCommunication(models.TransientModel):
             emails |= email
         return emails
 
-    @api.returns("credit.control.line")
     def _mark_credit_line_as_sent(self):
         lines = self.env["credit.control.line"]
         for comm in self:

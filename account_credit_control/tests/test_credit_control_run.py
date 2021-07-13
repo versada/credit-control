@@ -15,7 +15,7 @@ from odoo.tests.common import Form, TransactionCase
 @tagged("post_install", "-at_install")
 class TestCreditControlRun(TransactionCase):
     def setUp(self):
-        super(TestCreditControlRun, self).setUp()
+        super().setUp()
 
         journal = self.env.ref("account_credit_control.sales_journal")
 
@@ -63,7 +63,7 @@ class TestCreditControlRun(TransactionCase):
         # Create an invoice
         invoice_form = Form(
             self.env["account.move"].with_context(
-                default_type="out_invoice", check_move_validity=False
+                default_move_type="out_invoice", check_move_validity=False
             )
         )
         invoice_form.invoice_date = date_invoice
@@ -80,7 +80,7 @@ class TestCreditControlRun(TransactionCase):
             invoice_line_form.tax_ids.clear()
         self.invoice = invoice_form.save()
 
-        self.invoice.post()
+        self.invoice.action_post()
 
     def test_check_run_date(self):
         """
