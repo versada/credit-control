@@ -19,10 +19,7 @@
                     >
                         <div class="o_setting_left_pane" />
                         <div class="o_setting_right_pane">
-                            <label
-                                string="Default Policy"
-                                for="credit_control_policy"
-                            />
+                            <span class="o_form_label">Default Policy</span>
                             <div class="text-muted">
                             Default credit control policy to partners
                         </div>
