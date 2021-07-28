@@ -50,6 +50,7 @@ class CreditControlLine(models.Model):
         selection=[
             ("draft", "Draft"),
             ("ignored", "Ignored"),
+            ("queued", "Queued"),
             ("to_be_sent", "To Do"),
             ("sent", "Done"),
             ("error", "Error"),
@@ -86,13 +87,15 @@ class CreditControlLine(models.Model):
         index=True,
         store=True,
     )
+    communication_id = fields.Many2one(
+        comodel_name="credit.control.communication",
+        string="Communication process",
+        help="Credit control communication process where this line belongs",
+    )
     amount_due = fields.Float(
         string="Due Amount Tax incl.", required=True, readonly=True
     )
     balance_due = fields.Float(string="Due balance", required=True, readonly=True)
-    mail_message_id = fields.Many2one(
-        comodel_name="mail.mail", string="Sent Email", readonly=True
-    )
     move_line_id = fields.Many2one(
         comodel_name="account.move.line",
         string="Move line",
@@ -178,6 +181,7 @@ class CreditControlLine(models.Model):
         lines,
         level,
         controlling_date,
+        company,
         check_tolerance=True,
         default_lines_vals=None,
     ):
@@ -193,6 +197,7 @@ class CreditControlLine(models.Model):
         :param controlling_date: date string of the credit controlling date.
                                  Generally it should be the same
                                  as create date
+        :param company: res.company
         :param default_lines_vals: default values to create new credit control
                                    lines with
         :param check_tolerance: boolean if True credit line
@@ -203,15 +208,17 @@ class CreditControlLine(models.Model):
         :returns: recordset of created credit lines
         """
         currency_obj = self.env["res.currency"]
-        user = self.env.user
         currencies = currency_obj.search([])
 
         tolerance = {}
-        tolerance_base = user.company_id.credit_control_tolerance
-        user_currency = user.company_id.currency_id
+        tolerance_base = company.credit_control_tolerance
+        user_currency = company.currency_id
         for currency in currencies:
             tolerance[currency.id] = currency._convert(
-                tolerance_base, user_currency, user.company_id, controlling_date
+                tolerance_base,
+                user_currency,
+                company,
+                controlling_date or fields.Date.today(),
             )
 
         lines_to_create = []
@@ -235,14 +242,15 @@ class CreditControlLine(models.Model):
             )
             lines_to_create.append(vals)
 
-            # when we have lines generated earlier in draft,
-            # on the same level, it means that we have left
-            # them, so they are to be considered as ignored
+            # when we have lines generated earlier in draft
+            # or to_be_sent on the same level, it means that
+            # we have left them, so they are to be considered
+            # as ignored
             previous_drafts = self.search(
                 [
                     ("move_line_id", "=", move_line.id),
                     ("policy_level_id", "=", level.id),
-                    ("state", "=", "draft"),
+                    ("state", "in", ["draft", "to_be_sent"]),
                 ]
             )
             lines_to_write = lines_to_write | previous_drafts

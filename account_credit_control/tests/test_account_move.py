@@ -1,4 +1,5 @@
 # Copyright 2017 Okia SPRL (https://okia.be)
+# Copyright 2020 Tecnativa - João Marques
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 from datetime import datetime
 
@@ -7,18 +8,27 @@ from dateutil import relativedelta
 from odoo import fields
 from odoo.exceptions import UserError
 from odoo.tests import tagged
-from odoo.tests.common import Form, TransactionCase
+from odoo.tests.common import Form
+
+from odoo.addons.account.tests.common import AccountTestInvoicingCommon
 
 
 @tagged("post_install", "-at_install")
-class TestAccountInvoice(TransactionCase):
+class TestAccountInvoice(AccountTestInvoicingCommon):
+    @classmethod
+    def setUpClass(cls, chart_template_ref=None):
+        super().setUpClass(chart_template_ref=chart_template_ref)
+        cls.env.user.groups_id |= cls.env.ref(
+            "account_credit_control.group_account_credit_control_manager"
+        )
+
     def test_action_cancel(self):
         """
         Test the method action_cancel on invoice
         We will create an old invoice, generate a control run
         and check if I can unlink this invoice
         """
-        journal = self.env.ref("account_credit_control.sales_journal")
+        journal = self.company_data["default_journal_sale"]
 
         account_type_rec = self.env.ref("account.data_account_type_receivable")
         account = self.env["account.account"].create(
@@ -112,7 +122,7 @@ class TestAccountInvoice(TransactionCase):
         We will create an old invoice, generate a control run
         and check if I can unlink this invoice
         """
-        journal = self.env.ref("account_credit_control.sales_journal")
+        journal = self.company_data["default_journal_sale"]
 
         account_type_rec = self.env.ref("account.data_account_type_receivable")
         account = self.env["account.account"].create(
@@ -193,7 +203,7 @@ class TestAccountInvoice(TransactionCase):
         We will create an invoice, change credit policy and check
         if it has change the policy on invoice
         """
-        journal = self.env.ref("account_credit_control.sales_journal")
+        journal = self.company_data["default_journal_sale"]
 
         account_type_rec = self.env.ref("account.data_account_type_receivable")
         account = self.env["account.account"].create(

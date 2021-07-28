@@ -7,7 +7,7 @@
             name="groups_id"
             eval="[(4, ref('account_credit_control.group_account_credit_control_manager')), (4, ref('account_credit_control.group_account_credit_control_user'))]"
         />
-        <field name="domain">[('partner_id', '=',  active_id)]</field>
+        <field name="domain">[('partner_id', '=', active_id)]</field>
         <field name="binding_model_id" ref="base.model_res_partner" />
     </record>
     <record id="partner_view_buttons" model="ir.ui.view">

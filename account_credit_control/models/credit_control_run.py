@@ -60,10 +60,16 @@ class CreditControlRun(models.Model):
     credit_control_count = fields.Integer(
         compute="_compute_credit_control_count", string="# of Credit Control Lines"
     )
+    credit_control_communication_count = fields.Integer(
+        compute="_compute_credit_control_count",
+        string="# of Credit Control Communications",
+    )
     hide_change_state_button = fields.Boolean()
     company_id = fields.Many2one(
         comodel_name="res.company",
         default=lambda self: self.env.company,
+        readonly=True,
+        states={"draft": [("readonly", False)]},
         index=True,
     )
 
@@ -74,6 +80,9 @@ class CreditControlRun(models.Model):
         result = {data["run_id"][0]: data["run_id_count"] for data in fetch_data}
         for rec in self:
             rec.credit_control_count = result.get(rec.id, 0)
+            rec.credit_control_communication_count = len(
+                rec.mapped("line_ids.communication_id")
+            )
 
     @api.model
     def _check_run_date(self, controlling_date):
@@ -124,7 +133,7 @@ class CreditControlRun(models.Model):
                 policy_manual_lines,
                 policy_lines_generated,
                 policy_report,
-            ) = policy._generate_credit_lines(self.date, {"run_id": self.id})
+            ) = policy._generate_credit_lines(self, {"run_id": self.id})
             manually_managed_lines |= policy_manual_lines
             generated |= policy_lines_generated
             report += policy_report
@@ -165,6 +174,18 @@ class CreditControlRun(models.Model):
         # Ondelete cascade don't check unlink lines restriction
         self.mapped("line_ids").unlink()
         return super().unlink()
+
+    def open_credit_communications(self):
+        """Open the generated communications."""
+        self.ensure_one()
+        action = self.env.ref(
+            "account_credit_control.credit_control_communication_action"
+        )
+        action = action.read()[0]
+        action["domain"] = [
+            ("id", "in", self.mapped("line_ids.communication_id").ids),
+        ]
+        return action
 
     def open_credit_lines(self):
         """ Open the generated lines """
