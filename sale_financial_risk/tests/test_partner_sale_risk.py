@@ -8,7 +8,9 @@ class TestPartnerSaleRisk(SavepointCase):
     @classmethod
     def setUpClass(cls):
         super(TestPartnerSaleRisk, cls).setUpClass()
-        cls.env.user.groups_id |= cls.env.ref("sales_team.group_sale_manager")
+        cls.env.user.groups_id |= cls.env.ref(
+            "account_financial_risk.group_account_financial_risk_manager"
+        )
         cls.partner = cls.env["res.partner"].create(
             {"name": "Partner test", "customer_rank": 1}
         )
@@ -39,6 +41,43 @@ class TestPartnerSaleRisk(SavepointCase):
         cls.env.user.lang = "en_US"
 
     def test_sale_order(self):
+        self.sale_order.action_confirm()
+        self.assertAlmostEqual(self.partner.risk_sale_order, 100.0)
+        self.assertFalse(self.partner.risk_exception)
+        self.partner.risk_sale_order_limit = 99.0
+        self.assertTrue(self.partner.risk_exception)
+        sale_order2 = self.sale_order.copy()
+        wiz_dic = sale_order2.action_confirm()
+        wiz = self.env[wiz_dic["res_model"]].browse(wiz_dic["res_id"])
+        self.assertEqual(wiz.exception_msg, "Financial risk exceeded.\n")
+        self.partner.risk_sale_order_limit = 150.0
+        wiz_dic = sale_order2.action_confirm()
+        wiz = self.env[wiz_dic["res_model"]].browse(wiz_dic["res_id"])
+        self.assertEqual(
+            wiz.exception_msg, "This sale order exceeds the sales orders risk.\n"
+        )
+        self.partner.risk_sale_order_limit = 0.0
+        self.partner.risk_sale_order_include = True
+        self.partner.credit_limit = 100.0
+        wiz_dic = sale_order2.action_confirm()
+        wiz = self.env[wiz_dic["res_model"]].browse(wiz_dic["res_id"])
+        self.assertEqual(
+            wiz.exception_msg, "This sale order exceeds the financial risk.\n"
+        )
+        self.assertTrue(self.partner.risk_allow_edit)
+        wiz.button_continue()
+        self.assertAlmostEqual(self.partner.risk_sale_order, 200.0)
+
+    def test_sale_order_auto_done(self):
+        self.env["ir.config_parameter"].create(
+            {"key": "sale.auto_done_setting", "value": "True"}
+        )
+        self.env["ir.config_parameter"].create(
+            {
+                "key": "sale_financial_risk.include_risk_sale_order_done",
+                "value": "True",
+            }
+        )
         self.sale_order.action_confirm()
         self.assertAlmostEqual(self.partner.risk_sale_order, 100.0)
         self.assertFalse(self.partner.risk_exception)

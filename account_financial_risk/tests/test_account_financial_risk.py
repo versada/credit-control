@@ -4,6 +4,7 @@
 from dateutil.relativedelta import relativedelta
 
 from odoo import fields
+from odoo.exceptions import ValidationError
 from odoo.tests.common import SavepointCase
 
 
@@ -11,10 +12,17 @@ class TestPartnerFinancialRisk(SavepointCase):
     @classmethod
     def setUpClass(cls):
         super(TestPartnerFinancialRisk, cls).setUpClass()
-        cls.env.user.groups_id |= cls.env.ref("account.group_account_manager")
+        cls.env.user.groups_id |= cls.env.ref(
+            "account_financial_risk.group_account_financial_risk_manager"
+        )
         type_revenue = cls.env.ref("account.data_account_type_revenue")
         type_receivable = cls.env.ref("account.data_account_type_receivable")
         tax_group_taxes = cls.env.ref("account.tax_group_taxes")
+        main_company = cls.env.ref("base.main_company")
+        cls.cr.execute(
+            "UPDATE res_company SET currency_id = %s WHERE id = %s",
+            [cls.env.ref("base.USD").id, main_company.id],
+        )
         cls.account_sale = cls.env["account.account"].create(
             {
                 "name": "Sale",
@@ -101,7 +109,7 @@ class TestPartnerFinancialRisk(SavepointCase):
         self.partner.risk_invoice_draft_include = True
         self.assertAlmostEqual(self.partner.risk_invoice_draft, 550.0)
         self.assertAlmostEqual(self.partner.risk_total, 550.0)
-        self.invoice.action_post()
+        self.invoice._post()
         self.assertAlmostEqual(self.partner.risk_invoice_draft, 0.0)
         line = self.invoice.line_ids.filtered(lambda x: x.debit != 0.0)
         line.date_maturity = "2017-01-01"
@@ -208,8 +216,14 @@ class TestPartnerFinancialRisk(SavepointCase):
         self.partner.risk_invoice_unpaid_include = True
         self.partner.credit_limit = 100.0
         invoice2 = self.invoice.copy({"partner_id": self.invoice_address.id})
-        risk_exceeded_view = invoice2.action_post()
-        self.assertTrue(isinstance(risk_exceeded_view, dict))
+        validate_wiz = (
+            self.env["validate.account.move"]
+            .with_context(active_model="account.move", active_ids=invoice2.ids)
+            .create({})
+        )
+        with self.assertRaises(ValidationError):
+            invoice2.action_post()
+            validate_wiz.validate_move()
         self.assertEqual(invoice2.state, "draft")
 
     def test_open_risk_pivot_info(self):
@@ -247,3 +261,29 @@ class TestPartnerFinancialRisk(SavepointCase):
         self.assertEqual(action["res_model"], "account.move.line")
         self.assertTrue(action["view_id"])
         self.assertTrue(action["domain"])
+
+    def test_invoice_risk_draft_same_currency(self):
+        self.partner.risk_invoice_draft_include = True
+        self.invoice.currency_id = self.env.ref("base.USD")
+        self.partner.credit_limit = 100.0
+        self.assertGreater(self.partner.risk_total, self.partner.credit_limit)
+        self.assertTrue(
+            self.partner.risk_total, self.invoice.risk_amount_total_currency
+        )
+        self.assertTrue(
+            self.partner.risk_amount_exceeded,
+            self.partner.risk_total - self.partner.credit_limit,
+        )
+
+    def test_invoice_risk_draft_different_currency(self):
+        self.partner.risk_invoice_draft_include = True
+        self.invoice.currency_id = self.env.ref("base.EUR")
+        self.partner.credit_limit = 100.0
+        self.assertGreater(self.partner.risk_total, self.partner.credit_limit)
+        self.assertTrue(
+            self.partner.risk_total, self.invoice.risk_amount_total_currency
+        )
+        self.assertTrue(
+            self.partner.risk_amount_exceeded,
+            self.partner.risk_total - self.partner.credit_limit,
+        )

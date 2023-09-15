@@ -9,6 +9,7 @@ class SaleOrder(models.Model):
     _inherit = "sale.order"
 
     def evaluate_risk_message(self, partner):
+        self.ensure_one()
         risk_amount = self.currency_id._convert(
             self.amount_total,
             self.company_id.currency_id,
@@ -33,22 +34,31 @@ class SaleOrder(models.Model):
 
     def action_confirm(self):
         if not self.env.context.get("bypass_risk", False):
-            partner = self.partner_invoice_id.commercial_partner_id
-            exception_msg = self.evaluate_risk_message(partner)
-            if exception_msg:
-                return (
-                    self.env["partner.risk.exceeded.wiz"]
-                    .create(
-                        {
-                            "exception_msg": exception_msg,
-                            "partner_id": partner.id,
-                            "origin_reference": "{},{}".format("sale.order", self.id),
-                            "continue_method": "action_confirm",
-                        }
+            for order in self:
+                partner = order.partner_invoice_id.commercial_partner_id
+                exception_msg = order.evaluate_risk_message(partner)
+                if exception_msg:
+                    return (
+                        self.env["partner.risk.exceeded.wiz"]
+                        .create(
+                            {
+                                "exception_msg": exception_msg,
+                                "partner_id": partner.id,
+                                "origin_reference": "%s,%s" % ("sale.order", order.id),
+                                "continue_method": "action_confirm",
+                            }
+                        )
+                        .action_show()
                     )
-                    .action_show()
-                )
         return super().action_confirm()
+
+    @api.model
+    def _get_risk_states(self):
+        risk_states = ["sale"]
+        ICP = self.env["ir.config_parameter"].sudo()
+        if ICP.get_param("sale_financial_risk.include_risk_sale_order_done"):
+            risk_states.append("done")
+        return risk_states
 
 
 class SaleOrderLine(models.Model):
@@ -82,8 +92,9 @@ class SaleOrderLine(models.Model):
         "qty_invoiced",
     )
     def _compute_risk_amount(self):
+        risk_states = self.env["sale.order"]._get_risk_states()
         for line in self:
-            if line.state != "sale" or line.display_type:
+            if line.state not in risk_states or line.display_type:
                 line.risk_amount = 0.0
                 continue
             qty = line.product_uom_qty

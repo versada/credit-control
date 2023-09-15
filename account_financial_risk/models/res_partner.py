@@ -1,4 +1,4 @@
-# Copyright 2016-2018 Tecnativa - Carlos Dauden
+# Copyright 2016-2021 Tecnativa - Carlos Dauden
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
 from dateutil.relativedelta import relativedelta
@@ -121,6 +121,11 @@ class ResPartner(models.Model):
         string="Risk Exception",
         help="It Indicate if partner risk exceeded",
     )
+    risk_amount_exceeded = fields.Monetary(
+        string="Risk Over Limit",
+        currency_field="risk_currency_id",
+        compute="_compute_risk_exception",
+    )
     credit_policy = fields.Char()
     risk_allow_edit = fields.Boolean(compute="_compute_risk_allow_edit")
     credit_limit = fields.Float(tracking=True)
@@ -141,6 +146,31 @@ class ResPartner(models.Model):
     risk_currency_id = fields.Many2one(
         comodel_name="res.currency", compute="_compute_credit_currency"
     )
+    risk_remaining_value = fields.Monetary(
+        compute="_compute_risk_remaining",
+        string="Risk Remaining (Value)",
+        currency_field="risk_currency_id",
+        store=True,
+    )
+
+    risk_remaining_percentage = fields.Float(
+        compute="_compute_risk_remaining",
+        string="Risk Remaining (Percentage)",
+        store=True,
+    )
+
+    @api.depends("credit_limit", "risk_total")
+    def _compute_risk_remaining(self):
+        for record in self:
+            record.risk_remaining_value = record.credit_limit - record.risk_total
+            if record.credit_limit:
+                record.risk_remaining_percentage = round(
+                    100
+                    * (record.credit_limit - record.risk_total)
+                    / record.credit_limit
+                )
+            else:
+                record.risk_remaining_percentage = 0
 
     @api.depends(
         "credit_currency",
@@ -193,7 +223,7 @@ class ResPartner(models.Model):
         self.update(
             {
                 "risk_allow_edit": self.env.user.has_group(
-                    "account.group_account_manager"
+                    "account_financial_risk.group_account_financial_risk_manager"
                 )
             }
         )
@@ -203,7 +233,7 @@ class ResPartner(models.Model):
         return [("company_id", "in", self.env.companies.ids)]
 
     def _get_field_risk_model_domain(self, field_name):
-        """ Returns a tuple with model name and domain"""
+        """Returns a tuple with model name and domain"""
         risk_account_groups = self._risk_account_groups()
         if field_name == "risk_invoice_draft":
             domain = risk_account_groups["draft"]["domain"]
@@ -376,6 +406,7 @@ class ResPartner(models.Model):
         risk_field_list = self._risk_field_list()
         for partner in self:
             amount = 0.0
+            amount_exceeded = 0.0
             risk_exception = False
             for risk_field in risk_field_list:
                 field_value = getattr(partner, risk_field[0], 0.0)
@@ -383,11 +414,14 @@ class ResPartner(models.Model):
                 include = getattr(partner, risk_field[2], False)
                 if max_value and field_value > max_value:
                     risk_exception = True
+                    amount_exceeded += field_value - max_value
                 if include:
                     amount += field_value
             if partner.credit_limit and amount > partner.credit_limit:
                 risk_exception = True
+                amount_exceeded = amount - partner.credit_limit
             partner.risk_total = amount
+            partner.risk_amount_exceeded = amount_exceeded
             partner.risk_exception = risk_exception
 
     @api.model

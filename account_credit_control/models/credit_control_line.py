@@ -149,7 +149,7 @@ class CreditControlLine(models.Model):
     def _prepare_from_move_line(
         self, move_line, level, controlling_date, open_amount, default_lines_vals
     ):
-        """ Create credit control line """
+        """Create credit control line"""
         channel = level.channel
         partner = move_line.partner_id
         # Fallback to letter
@@ -294,9 +294,9 @@ class CreditControlLine(models.Model):
 
     def button_credit_control_line_form(self):
         self.ensure_one()
-        action = self.env.ref("account_credit_control.credit_control_line_action")
+        action_name = "account_credit_control.credit_control_line_action"
         form = self.env.ref("account_credit_control.credit_control_line_form")
-        action = action.read()[0]
+        action = self.env["ir.actions.act_window"]._for_xml_id(action_name)
         action["views"] = [(form.id, "form")]
         action["res_id"] = self.id
         return action

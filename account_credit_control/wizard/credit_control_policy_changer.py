@@ -86,7 +86,7 @@ class CreditControlPolicyChanger(models.TransientModel):
 
     @api.model
     def _set_invoice_policy(self, move_lines, policy):
-        """ Force policy on invoice """
+        """Force policy on invoice"""
         invoices = move_lines.mapped("move_id")
         invoices.write({"credit_policy_id": policy.id})
 
@@ -135,7 +135,6 @@ class CreditControlPolicyChanger(models.TransientModel):
             return {"type": "ir.actions.act_window_close"}
 
         action_ref = "account_credit_control.credit_control_line_action"
-        action = self.env.ref(action_ref)
-        action = action.read()[0]
+        action = self.env["ir.actions.act_window"]._for_xml_id(action_ref)
         action["domain"] = [("id", "in", generated_lines.ids)]
         return action
